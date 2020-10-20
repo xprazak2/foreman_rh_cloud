@@ -11,7 +11,7 @@ module ForemanRhCloud
         method: :post,
         url: ForemanRhCloud.authentication_url,
         verify_ssl: ForemanRhCloud.verify_ssl_method,
-        proxy: ForemanRhCloud.transformed_http_proxy_string(logger: logger),
+        # proxy: ForemanRhCloud.transformed_http_proxy_string(logger: logger),
         payload: {
           grant_type: 'refresh_token',
           client_id: 'rhsm-api',

@@ -3,8 +3,9 @@ require 'rest-client'
 module ForemanRhCloud
   class CloudRequestForwarder
     include ::ForemanRhCloud::CloudAuth
+    include ::InsightsCloud::CandlepinCache
 
-    def forward_request(original_request, controller_name, branch_id)
+    def forward_request(original_request, controller_name, branch_id, certs)
       forward_params = prepare_forward_params(original_request, branch_id)
       logger.debug{"Request parameters for telemetry request: #{forward_params}"}
 
@@ -15,17 +16,19 @@ module ForemanRhCloud
       cloud_url = ForemanRhCloud.prepare_forward_cloud_url(original_request.path)
       logger.debug("Sending request to: #{cloud_url}")
 
-      execute_cloud_request(original_request.method, cloud_url, forward_payload, forward_params)
+      execute_cloud_request(original_request.method, cloud_url, forward_payload, forward_params, certs)
     end
 
-    def execute_cloud_request(req_method, cloud_url, forward_payload, forward_params)
+    def execute_cloud_request(req_method, cloud_url, forward_payload, forward_params, certs)
       RestClient::Request.execute(
         method: req_method,
         url: cloud_url,
         verify_ssl: ForemanRhCloud.verify_ssl_method,
         payload: forward_payload,
+        ssl_client_cert: OpenSSL::X509::Certificate.new(certs[:cert]),
+        ssl_client_key: OpenSSL::PKey::RSA.new(certs[:key]),
         headers: {
-          Authorization: "Bearer #{rh_credentials}",
+          # Authorization: "Bearer #{rh_credentials}",
           params: forward_params,
         }
       )

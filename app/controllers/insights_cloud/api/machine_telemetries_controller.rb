@@ -3,7 +3,7 @@ module InsightsCloud::Api
     layout false
 
     include ::InsightsCloud::ClientAuthentication
-    include ::InsightsCloud::CandlepinRelated
+    include ::InsightsCloud::CandlepinCache
 
     before_action :ensure_telemetry_enabled_for_consumer, :only => [:forward_request]
     before_action :cert_uuid, :ensure_org, :ensure_branch_id, :only => [:forward_request]
@@ -12,7 +12,8 @@ module InsightsCloud::Api
 
     # The method that "proxies" requests over to Cloud
     def forward_request
-      cloud_response = ::ForemanRhCloud::CloudRequestForwarder.new.forward_request(request, controller_name, @branch_id)
+      certs = candlepin_id_cert(@organization)
+      cloud_response = ::ForemanRhCloud::CloudRequestForwarder.new.forward_request(request, controller_name, @branch_id, certs)
 
       if cloud_response.code == 401
         return render json: {
